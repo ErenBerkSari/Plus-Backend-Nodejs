@@ -66,6 +66,6 @@ const deleteUnusedFiles = async () => {
 };
 
 // 🕒 1 saatte bir çalıştır
-setInterval(deleteUnusedFiles, 1000 * 60 * 60);
+// setInterval(deleteUnusedFiles, 1000 * 60 * 60);
 
 module.exports = deleteUnusedFiles;
