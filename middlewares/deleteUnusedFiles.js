@@ -12,60 +12,70 @@ const deleteUnusedFiles = async () => {
   try {
     console.log("🗑️ Kullanılmayan dosyalar temizleniyor...");
 
-    // 📌 1️⃣ Veritabanındaki tüm kullanılan dosyaları al
-    const products = await Product.find({}, "productImage");
-    const owners = await Owner.find({}, "ownerImage");
-    const heros = await Hero.find({}, "heroImage heroVideo");
-    const abouts = await About.find({}, "aboutImage aboutVideo");
-    const galleries = await Gallery.find({}, "imageUrl"); // Doğru alanı aldık
-
     const usedFiles = new Set();
 
-    // 📌 2️⃣ Kullanılan dosyaların yolunu set'e ekle
-    const addFileToSet = (filePath) => {
-      if (filePath) {
-        usedFiles.add(path.join(uploadsDir, filePath.replace("/uploads", "")));
+    // 📌 Kullanılan dosyaları veritabanından alıp set'e ekleyen fonksiyon
+    const fetchFiles = async (model, fields) => {
+      try {
+        const records = await model.find({}, fields.join(" "));
+        records.forEach((record) => {
+          fields.forEach((field) => {
+            if (record[field]) {
+              usedFiles.add(
+                path.join(uploadsDir, record[field].replace("/uploads", ""))
+              );
+            }
+          });
+        });
+      } catch (err) {
+        console.error(
+          `❌ ${model.modelName} modelinden dosyalar alınırken hata oluştu:`,
+          err
+        );
       }
     };
 
-    products.forEach((p) => addFileToSet(p.productImage));
-    owners.forEach((o) => addFileToSet(o.ownerImage));
-    abouts.forEach((a) => {
-      addFileToSet(a.aboutImage);
-      addFileToSet(a.aboutVideo);
-    });
-    heros.forEach((h) => {
-      addFileToSet(h.heroImage);
-      addFileToSet(h.heroVideo);
-    });
-    galleries.forEach((g) => addFileToSet(g.imageUrl));
+    // 📌 Veritabanındaki tüm dosyaları al
+    await Promise.all([
+      fetchFiles(Product, ["productImage"]),
+      fetchFiles(Owner, ["ownerImage"]),
+      fetchFiles(About, ["aboutImage", "aboutVideo"]),
+      fetchFiles(Hero, ["heroImage", "heroVideo"]),
+      fetchFiles(Gallery, ["imageUrl"]),
+    ]);
 
-    // 📌 3️⃣ uploads klasöründeki tüm dosyaları ve alt klasörleri tara
+    // 📌 uploads klasörünü tara ve kullanılmayan dosyaları sil
     const scanAndDelete = (dir) => {
-      fs.readdirSync(dir).forEach((file) => {
-        const filePath = path.join(dir, file);
+      try {
+        fs.readdirSync(dir).forEach((file) => {
+          const filePath = path.join(dir, file);
 
-        // Eğer klasörse içine gir
-        if (fs.statSync(filePath).isDirectory()) {
-          return scanAndDelete(filePath);
-        }
+          if (fs.statSync(filePath).isDirectory()) {
+            return scanAndDelete(filePath);
+          }
 
-        // Eğer dosya kullanılmıyorsa sil
-        if (!usedFiles.has(filePath)) {
-          fs.unlinkSync(filePath);
-          console.log(`✅ Silindi: ${filePath}`);
-        }
-      });
+          if (!usedFiles.has(filePath) && fs.existsSync(filePath)) {
+            fs.unlink(filePath, (err) => {
+              if (err) {
+                console.error(`❌ Silinemedi: ${filePath}`, err);
+              } else {
+                console.log(`✅ Silindi: ${filePath}`);
+              }
+            });
+          }
+        });
+      } catch (err) {
+        console.error("❌ Dosya tarama/silme sırasında hata oluştu:", err);
+      }
     };
 
     scanAndDelete(uploadsDir);
     console.log("✅ Kullanılmayan dosyalar temizlendi.");
   } catch (error) {
-    console.error("🔥 Kullanılmayan dosyaları temizlerken hata:", error);
+    console.error("🔥 Kullanılmayan dosyaları temizlerken genel hata:", error);
   }
 };
 
-// 🕒 1 saatte bir çalıştır
-// setInterval(deleteUnusedFiles, 1000 * 60 * 60);
+setInterval(deleteUnusedFiles, 1000 * 60 * 60);
 
 module.exports = deleteUnusedFiles;
