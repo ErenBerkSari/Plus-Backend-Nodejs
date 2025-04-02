@@ -19,7 +19,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: "https://plus-murex.vercel.app/", // Frontend'inizin çalıştığı port
+    origin: "http://localhost:5173", // Frontend'inizin çalıştığı port
     credentials: true, // Cookie'lerin gönderilmesine izin ver
   })
 );
