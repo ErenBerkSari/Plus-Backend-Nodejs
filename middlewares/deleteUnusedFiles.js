@@ -8,10 +8,12 @@ const Hero = require("../models/Hero");
 
 const uploadsDir = path.join(__dirname, "../uploads");
 
+// 📌 Kullanılmayan dosyaları temizleyen fonksiyon
 const deleteUnusedFiles = async () => {
   try {
     console.log("🗑️ Kullanılmayan dosyalar temizleniyor...");
 
+    // ✅ Kullanılan dosyaları takip etmek için Set kullan
     const usedFiles = new Set();
 
     // 📌 Kullanılan dosyaları veritabanından alıp set'e ekleyen fonksiyon
@@ -21,9 +23,11 @@ const deleteUnusedFiles = async () => {
         records.forEach((record) => {
           fields.forEach((field) => {
             if (record[field]) {
-              usedFiles.add(
-                path.join(uploadsDir, record[field].replace("/uploads", ""))
+              const filePath = path.join(
+                uploadsDir,
+                path.basename(record[field])
               );
+              usedFiles.add(filePath);
             }
           });
         });
@@ -47,6 +51,12 @@ const deleteUnusedFiles = async () => {
     // 📌 uploads klasörünü tara ve kullanılmayan dosyaları sil
     const scanAndDelete = (dir) => {
       try {
+        if (!fs.existsSync(dir)) {
+          fs.mkdirSync(dir, { recursive: true });
+          console.log("📂 'uploads' klasörü oluşturuldu.");
+          return;
+        }
+
         fs.readdirSync(dir).forEach((file) => {
           const filePath = path.join(dir, file);
 
@@ -76,6 +86,7 @@ const deleteUnusedFiles = async () => {
   }
 };
 
+// 📌 Her saat başı kullanılmayan dosyaları temizle
 setInterval(deleteUnusedFiles, 1000 * 60 * 60);
 
 module.exports = deleteUnusedFiles;
