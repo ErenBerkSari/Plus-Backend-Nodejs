@@ -1,6 +1,7 @@
 const path = require("path");
 const fs = require("fs");
 const Hero = require("../models/Hero");
+const cloudinary = require("../utils/cloudinary");
 
 const createHero = async (req, res) => {
   const { heroTitle, heroDesc, heroVideo, heroImage } = req.body;
