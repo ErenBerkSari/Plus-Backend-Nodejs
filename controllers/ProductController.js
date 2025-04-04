@@ -3,74 +3,8 @@ const fs = require("fs");
 const Product = require("../models/Product");
 const cloudinary = require("../utils/cloudinary");
 
-// const createProduct = async (req, res) => {
-//   console.log("Gelen Veriler:", req.body);
-//   console.log("Yüklenen Dosyalar:", req.file);
-
-//   try {
-//     const { productName, productDesc, productPrice } = req.body;
-
-//     // Yüklenen görselin yolunu al
-//     // const productImage = req.file
-//     //   ? `/uploads/products/${req.file.filename}`
-//     //   : null;
-//     const productImage = req.file?.path;
-
-//     const newProduct = new Product({
-//       productName,
-//       productDesc,
-//       productPrice,
-//       productImage,
-//     });
-
-//     const savedProduct = await newProduct.save();
-//     console.log("Kaydedilen Ürün:", savedProduct);
-
-//     res.status(201).json(savedProduct);
-//   } catch (error) {
-//     console.error("Ürün Oluşturma Hatası:", error);
-//     res.status(500).json({ message: "Ürün oluşturulurken bir hata oluştu." });
-//   }
-// };
-
-// const updateProduct = async (req, res) => {
-//   console.log("📩 Gelen Veriler:", req.body);
-//   console.log("🖼️ Yüklenen Dosya:", req.file);
-
-//   const { id } = req.params;
-//   const { productName, productDesc, productPrice } = req.body;
-
-//   const updateData = {
-//     productName,
-//     productDesc,
-//     productPrice,
-//   };
-
-//   // Eğer yeni bir resim yüklenmişse, güncelle
-//   // if (req.file) {
-//   //   updateData.productImage = `/uploads/products/${req.file.filename}`;
-//   // }
-//   if (req.file?.path) updateData.productImage = req.file.path;
-
-//   try {
-//     const updatedProduct = await Product.findByIdAndUpdate(id, updateData, {
-//       new: true,
-//     });
-
-//     if (!updatedProduct) {
-//       return res.status(404).json({ message: "Ürün bulunamadı." });
-//     }
-
-//     res.status(200).json(updatedProduct);
-//   } catch (error) {
-//     console.error("🔥 Ürün güncellenirken hata:", error);
-//     res.status(500).json({ message: "Ürün güncellenirken hata oluştu." });
-//   }
-// };
 const createProduct = async (req, res) => {
   try {
-    const { productName, productDesc, productPrice } = req.body;
-
     // Eğer bir dosya yüklenmişse Cloudinary'ye gönder
     if (req.file) {
       // Stream kullanarak Cloudinary'ye yükleme
@@ -93,11 +27,11 @@ const createProduct = async (req, res) => {
       // Cloudinary yükleme işlemini bekle
       const result = await uploadPromise;
 
-      // Yeni ürünü oluştur
+      // Yeni ürünü oluştur - Schema ile uyumlu alan isimleri kullan
       const newProduct = new Product({
-        productName,
-        productDesc,
-        productPrice,
+        productName: req.body.productName,
+        productDesc: req.body.productDesc,
+        productPrice: req.body.productPrice,
         productImage: result.secure_url,
       });
 
@@ -125,11 +59,11 @@ const updateProduct = async (req, res) => {
       return res.status(404).json({ error: "Ürün bulunamadı!" });
     }
 
-    // Güncellenecek alanları hazırla
+    // Güncellenecek alanları hazırla - Schema ile uyumlu alan isimleri kullan
     let updatedFields = {
-      name: req.body.productName || product.productName,
-      desc: req.body.productDesc || product.productDesc,
-      price: req.body.productPrice || product.productPrice,
+      productName: req.body.productName || product.productName,
+      productDesc: req.body.productDesc || product.productDesc,
+      productPrice: req.body.productPrice || product.productPrice,
     };
 
     // Eğer yeni bir resim yüklendiyse
