@@ -69,38 +69,47 @@ const cloudinary = require("../utils/cloudinary");
 // };
 const createProduct = async (req, res) => {
   try {
-    let imageUrl = "";
-
     // Eğer bir dosya yüklenmişse Cloudinary'ye gönder
     if (req.file) {
-      const result = await cloudinary.uploader.upload_stream(
-        { folder: "products" },
-        async (error, result) => {
-          if (error)
-            return res.status(500).json({ error: "Dosya yükleme hatası" });
+      // Stream kullanarak Cloudinary'ye yükleme
+      const uploadPromise = new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: "products" },
+          (error, result) => {
+            if (error) {
+              console.error("Cloudinary yükleme hatası:", error);
+              return reject(error);
+            }
+            resolve(result);
+          }
+        );
 
-          imageUrl = result.secure_url; // Cloudinary'den dönen URL
+        // Buffer'ı stream'e aktar
+        stream.end(req.file.buffer);
+      });
 
-          // Yeni ürünü oluştur
-          const newProduct = new Product({
-            name: req.body.name,
-            price: req.body.price,
-            productImage: imageUrl,
-          });
+      // Cloudinary yükleme işlemini bekle
+      const result = await uploadPromise;
 
-          await newProduct.save();
-          res.status(201).json(newProduct);
-        }
-      );
+      // Yeni ürünü oluştur
+      const newProduct = new Product({
+        name: req.body.productName,
+        desc: req.body.productDesc,
+        price: req.body.productPrice,
+        productImage: result.secure_url,
+      });
 
-      result.end(req.file.buffer);
+      await newProduct.save();
+      res.status(201).json(newProduct);
     } else {
       return res.status(400).json({ error: "Lütfen bir görsel yükleyin." });
     }
   } catch (error) {
-    res.status(500).json({ error: "Sunucu hatası" });
+    console.error("Ürün oluşturma hatası:", error);
+    res.status(500).json({ error: "Sunucu hatası", details: error.message });
   }
 };
+
 const updateProduct = async (req, res) => {
   try {
     console.log("📤 Güncelleme isteği alındı. ID:", req.params.id);
@@ -114,18 +123,48 @@ const updateProduct = async (req, res) => {
       return res.status(404).json({ error: "Ürün bulunamadı!" });
     }
 
-    let updatedFields = req.body;
+    // Güncellenecek alanları hazırla
+    let updatedFields = {
+      name: req.body.productName || product.name,
+      desc: req.body.productDesc || product.desc,
+      price: req.body.productPrice || product.price,
+    };
 
+    // Eğer yeni bir resim yüklendiyse
     if (req.file) {
-      console.log("📸 Yeni resim yüklendi:", req.file.path);
+      console.log("📸 Yeni resim yüklendi");
 
+      // Eski resmi sil (eğer varsa)
       if (product.productImage) {
-        const publicId = product.productImage.split("/").pop().split(".")[0];
-        console.log("🗑️ Eski resim siliniyor, public_id:", publicId);
-        await cloudinary.uploader.destroy(publicId);
+        try {
+          // Cloudinary URL'sinden public_id çıkarma
+          const publicId = product.productImage.split("/").pop().split(".")[0];
+          const folder = product.productImage.split("/").slice(-2)[0];
+          const fullPublicId = `${folder}/${publicId}`;
+
+          console.log("🗑️ Eski resim siliniyor, public_id:", fullPublicId);
+          await cloudinary.uploader.destroy(fullPublicId);
+        } catch (deleteError) {
+          console.error("Eski resim silinirken hata:", deleteError);
+          // Eski resim silinirken hata olsa bile devam et
+        }
       }
 
-      updatedFields.productImage = req.file.path;
+      // Yeni resmi Cloudinary'ye yükle
+      const uploadPromise = new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: "products" },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+          }
+        );
+
+        stream.end(req.file.buffer);
+      });
+
+      const result = await uploadPromise;
+      updatedFields.productImage = result.secure_url;
     }
 
     console.log("📝 Ürün güncelleniyor:", updatedFields);
