@@ -37,8 +37,6 @@ mongoose
     console.log(err);
   });
 
-deleteUnusedFiles();
-
 app.use("/auth", authRoute);
 app.use("/hero", heroRoute);
 app.use("/about", aboutRoute);
