@@ -103,43 +103,34 @@ const createProduct = async (req, res) => {
 };
 const updateProduct = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
-    if (!product) return res.status(404).json({ error: "Ürün bulunamadı" });
+    const { id } = req.params;
+    const product = await Product.findById(id);
 
-    let imageUrl = product.productImage; // Varsayılan olarak eski resmi kullan
-
-    // Yeni resim yüklenmişse
-    if (req.file) {
-      // Cloudinary'ye yükle
-      const result = await cloudinary.uploader.upload_stream(
-        { folder: "products" },
-        async (error, result) => {
-          if (error)
-            return res.status(500).json({ error: "Resim yükleme hatası" });
-
-          // Cloudinary'deki eski resmi sil
-          if (product.productImage) {
-            const publicId = product.productImage
-              .split("/")
-              .pop()
-              .split(".")[0];
-            await cloudinary.uploader.destroy(`products/${publicId}`);
-          }
-
-          imageUrl = result.secure_url; // Yeni URL'yi al
-          product.productImage = imageUrl;
-          await product.save();
-          res.status(200).json(product);
-        }
-      );
-
-      result.end(req.file.buffer);
-    } else {
-      await product.save();
-      res.status(200).json(product);
+    if (!product) {
+      return res.status(404).json({ error: "Ürün bulunamadı!" });
     }
+
+    let updatedFields = req.body;
+
+    // Eğer yeni bir resim yüklendiyse eski resmi sil
+    if (req.file) {
+      if (product.productImage) {
+        const publicId = product.productImage.split("/").pop().split(".")[0]; // Cloudinary public_id'yi al
+        await cloudinary.uploader.destroy(publicId);
+      }
+
+      updatedFields.productImage = req.file.path; // Yeni resim URL'si
+    }
+
+    // Güncelleme işlemi
+    const updatedProduct = await Product.findByIdAndUpdate(id, updatedFields, {
+      new: true,
+    });
+
+    return res.json(updatedProduct);
   } catch (error) {
-    res.status(500).json({ error: "Sunucu hatası" });
+    console.error("❌ Güncelleme hatası:", error);
+    return res.status(500).json({ error: "Sunucuda bir hata oluştu!" });
   }
 };
 
