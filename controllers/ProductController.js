@@ -69,6 +69,8 @@ const cloudinary = require("../utils/cloudinary");
 // };
 const createProduct = async (req, res) => {
   try {
+    const { productName, productDesc, productPrice } = req.body;
+
     // Eğer bir dosya yüklenmişse Cloudinary'ye gönder
     if (req.file) {
       // Stream kullanarak Cloudinary'ye yükleme
@@ -93,9 +95,9 @@ const createProduct = async (req, res) => {
 
       // Yeni ürünü oluştur
       const newProduct = new Product({
-        name: req.body.productName,
-        desc: req.body.productDesc,
-        price: req.body.productPrice,
+        productName,
+        productDesc,
+        productPrice,
         productImage: result.secure_url,
       });
 
@@ -125,9 +127,9 @@ const updateProduct = async (req, res) => {
 
     // Güncellenecek alanları hazırla
     let updatedFields = {
-      name: req.body.productName || product.name,
-      desc: req.body.productDesc || product.desc,
-      price: req.body.productPrice || product.price,
+      name: req.body.productName || product.productName,
+      desc: req.body.productDesc || product.productDesc,
+      price: req.body.productPrice || product.productPrice,
     };
 
     // Eğer yeni bir resim yüklendiyse
