@@ -103,26 +103,32 @@ const createProduct = async (req, res) => {
 };
 const updateProduct = async (req, res) => {
   try {
+    console.log("📤 Güncelleme isteği alındı. ID:", req.params.id);
+    console.log("🔄 Gönderilen veriler:", req.body);
+
     const { id } = req.params;
     const product = await Product.findById(id);
 
     if (!product) {
+      console.log("❌ Ürün bulunamadı!");
       return res.status(404).json({ error: "Ürün bulunamadı!" });
     }
 
     let updatedFields = req.body;
 
-    // Eğer yeni bir resim yüklendiyse eski resmi sil
     if (req.file) {
+      console.log("📸 Yeni resim yüklendi:", req.file.path);
+
       if (product.productImage) {
-        const publicId = product.productImage.split("/").pop().split(".")[0]; // Cloudinary public_id'yi al
+        const publicId = product.productImage.split("/").pop().split(".")[0];
+        console.log("🗑️ Eski resim siliniyor, public_id:", publicId);
         await cloudinary.uploader.destroy(publicId);
       }
 
-      updatedFields.productImage = req.file.path; // Yeni resim URL'si
+      updatedFields.productImage = req.file.path;
     }
 
-    // Güncelleme işlemi
+    console.log("📝 Ürün güncelleniyor:", updatedFields);
     const updatedProduct = await Product.findByIdAndUpdate(id, updatedFields, {
       new: true,
     });
@@ -130,7 +136,9 @@ const updateProduct = async (req, res) => {
     return res.json(updatedProduct);
   } catch (error) {
     console.error("❌ Güncelleme hatası:", error);
-    return res.status(500).json({ error: "Sunucuda bir hata oluştu!" });
+    return res
+      .status(500)
+      .json({ error: "Sunucuda bir hata oluştu!", details: error.message });
   }
 };
 
