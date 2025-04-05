@@ -17,6 +17,7 @@ const OwnerSchema = new mongoose.Schema({
     type: String,
     default: "", // Varsayılan olarak boş bırak
   },
+  cloudinaryId: { type: String },
 });
 
 module.exports = mongoose.model("Owner", OwnerSchema);
