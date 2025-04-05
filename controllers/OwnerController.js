@@ -1,6 +1,7 @@
 const path = require("path");
 const fs = require("fs");
 const Owner = require("../models/Owner");
+const cloudinary = require("../utils/cloudinary");
 
 const createOwner = async (req, res) => {
   console.log("Gelen Veriler:", req.body);

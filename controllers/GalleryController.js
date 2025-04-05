@@ -18,7 +18,6 @@ const getAllImages = async (req, res) => {
 };
 
 // 📌 Yeni resim ekle
-// 📌 Yeni resim ekle
 const uploadImage = async (req, res) => {
   console.log("📩 Gelen Veriler:", req.body);
   console.log("🖼️ Yüklenen Dosya:", req.file);
