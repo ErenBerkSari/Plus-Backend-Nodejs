@@ -1,6 +1,7 @@
 const path = require("path");
 const fs = require("fs");
 const Gallery = require("../models/Gallery");
+const cloudinary = require("../utils/cloudinary");
 
 // 📌 Tüm resimleri getir
 const getAllImages = async (req, res) => {
@@ -17,6 +18,7 @@ const getAllImages = async (req, res) => {
 };
 
 // 📌 Yeni resim ekle
+// 📌 Yeni resim ekle
 const uploadImage = async (req, res) => {
   console.log("📩 Gelen Veriler:", req.body);
   console.log("🖼️ Yüklenen Dosya:", req.file);
@@ -26,9 +28,32 @@ const uploadImage = async (req, res) => {
       return res.status(400).json({ message: "Lütfen bir resim yükleyin." });
     }
 
-    const imageUrl = `/uploads/gallery/${req.file.filename}`;
+    // Cloudinary'e yükleme işlemi
+    const imageUploadPromise = new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        { folder: "gallery" },
+        (error, result) => {
+          if (error) {
+            console.error("Cloudinary resim yükleme hatası:", error);
+            return reject(error);
+          }
+          resolve(result);
+        }
+      );
 
-    const newImage = new Gallery({ imageUrl });
+      // Buffer'ı stream'e dönüştür
+      const bufferToStream = require("stream").Readable.from(req.file.buffer);
+      bufferToStream.pipe(uploadStream);
+    });
+
+    const imageResult = await imageUploadPromise;
+    const imageUrl = imageResult.secure_url;
+
+    const newImage = new Gallery({
+      imageUrl,
+      cloudinaryId: imageResult.public_id, // Silme işlemi için public_id'yi de saklayalım
+    });
+
     const savedImage = await newImage.save();
 
     console.log("✅ Kaydedilen Resim:", savedImage);
@@ -40,6 +65,7 @@ const uploadImage = async (req, res) => {
 };
 
 // 📌 Resmi sil
+// 📌 Resmi sil
 const deleteImage = async (req, res) => {
   const { id } = req.params;
 
@@ -49,12 +75,27 @@ const deleteImage = async (req, res) => {
       return res.status(404).json({ message: "Resim bulunamadı." });
     }
 
-    // Dosyayı fiziksel olarak da silmek için:
-    const filePath = path.join(__dirname, "..", image.imageUrl);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+    // Cloudinary'den resmi sil
+    if (image.cloudinaryId) {
+      // Doğrudan cloudinaryId kullanarak sil
+      await cloudinary.uploader.destroy(image.cloudinaryId);
+    } else if (image.imageUrl && image.imageUrl.includes("cloudinary")) {
+      try {
+        // Eski kodlarda cloudinaryId yoksa URL'den çıkarmayı dene
+        const urlParts = image.imageUrl.split("/");
+        const fileName = urlParts[urlParts.length - 1].split(".")[0];
+        const folderName = urlParts[urlParts.length - 2];
+        const publicId = `${folderName}/${fileName}`;
+
+        console.log("Cloudinary'den resim siliniyor:", publicId);
+        await cloudinary.uploader.destroy(publicId);
+      } catch (deleteError) {
+        console.error("Cloudinary'den resim silinirken hata:", deleteError);
+        // Hata olsa bile veritabanından silmeye devam et
+      }
     }
 
+    // Veritabanından resmi sil
     await Gallery.findByIdAndDelete(id);
     res.status(200).json({ message: "Resim başarıyla silindi." });
   } catch (error) {
