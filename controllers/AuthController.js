@@ -23,51 +23,6 @@ const generateRefreshToken = (user) => {
   );
 };
 
-const register = async (req, res) => {
-  const { username, password, email } = req.body;
-  if (!username || !password || !email) {
-    return res
-      .status(400)
-      .json({ message: "Lütfen tüm gerekli alanları doldurunuz." });
-  }
-  try {
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ username, password: hashedPassword, email });
-    await newUser.save();
-
-    const accessToken = generateAccessToken(newUser);
-    const refreshToken = generateRefreshToken(newUser);
-
-    await Token.create({
-      userId: newUser._id,
-      refreshToken,
-      createdAt: Date.now(),
-    });
-
-    res.cookie("accessToken", accessToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      maxAge: 20 * 60 * 1000,
-    });
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-    res.status(201).json({
-      userId: newUser._id,
-      email,
-      role: newUser.role,
-      message: "Kayıt başarılı.",
-    });
-  } catch (error) {
-    console.error("Sunucu hatası: ", error);
-    res.status(500).json({ message: "Sunucuda bir hata oluştu." });
-  }
-};
-
 const login = async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -222,7 +177,6 @@ const getAuthUser = async (req, res) => {
   }
 };
 module.exports = {
-  register,
   login,
   refresh,
   logout,
