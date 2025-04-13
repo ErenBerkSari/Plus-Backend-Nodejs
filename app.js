@@ -12,7 +12,6 @@ const productRoute = require("./routes/productRoute");
 const galleryRoute = require("./routes/galleryRoute");
 const ownerRoute = require("./routes/ownerRoute");
 const contactRoute = require("./routes/contactRoute");
-const deleteUnusedFiles = require("./middlewares/deleteUnusedFiles");
 dotenv.config();
 
 const app = express();
