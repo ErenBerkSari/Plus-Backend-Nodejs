@@ -4,6 +4,7 @@ const WhyUs = require("../models/WhyUs");
 
 const createWhyUs = async (req, res) => {
   const { whyUsTitle, whyUsMainText, features } = req.body;
+  console.log("Gelen Veriler:", req.body); // Gelen verileri logla
 
   try {
     const newWhyUs = new WhyUs({
@@ -13,6 +14,7 @@ const createWhyUs = async (req, res) => {
     });
 
     const savedWhyUs = await newWhyUs.save();
+    console.log("Kaydedilen WhyUs:", savedWhyUs);
 
     res.status(201).json(savedWhyUs);
   } catch (error) {
@@ -53,6 +55,8 @@ const updateWhyUs = async (req, res) => {
     // Eğer frontend'den virgülle ayrılmış string olarak gelirse, diziye çevir
     updateData.features = features.split(",").map((item) => item.trim());
   }
+
+  console.log("Update data:", updateData);
 
   try {
     const updatedWhyUs = await WhyUs.findByIdAndUpdate(id, updateData, {

@@ -5,6 +5,7 @@ const Contact = require("../models/Contact");
 const createContact = async (req, res) => {
   const { contactAddress, contactPhone, contactEmail, contactOpeningHours } =
     req.body;
+  console.log("Gelen Veriler:", req.body); // Gelen verileri logla
 
   try {
     const newContact = new Contact({
@@ -15,6 +16,7 @@ const createContact = async (req, res) => {
     });
 
     const savedContact = await newContact.save();
+    console.log("Kaydedilen Contact:", savedContact);
 
     res.status(201).json(savedContact);
   } catch (error) {
@@ -51,6 +53,8 @@ const updateContact = async (req, res) => {
     contactEmail: contactEmail || "",
     contactOpeningHours: contactOpeningHours || "",
   };
+
+  console.log("Update data:", updateData);
 
   try {
     const updatedContact = await Contact.findByIdAndUpdate(id, updateData, {

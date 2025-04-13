@@ -12,6 +12,7 @@ const createAbout = async (req, res) => {
     aboutImage,
     aboutContact,
   } = req.body;
+  console.log("Gelen Veriler:", req.body); // Gelen verileri logla
 
   try {
     const newAbout = new About({
@@ -24,6 +25,7 @@ const createAbout = async (req, res) => {
     });
 
     const savedAbout = await newAbout.save();
+    console.log("Kaydedilen Ders:", savedAbout);
 
     res.status(201).json(newAbout);
   } catch (error) {
@@ -49,6 +51,9 @@ const getAbout = async (req, res) => {
 };
 
 const updateAbout = async (req, res) => {
+  console.log("Gelen veriler:", req.body);
+  console.log("Yüklenen dosyalar:", req.files);
+
   const id = process.env.ABOUT;
   const { aboutIntro, aboutList, aboutLastText, aboutContact } = req.body;
 
@@ -107,6 +112,7 @@ const updateAbout = async (req, res) => {
           const folderName = urlParts[urlParts.length - 2];
           const publicId = `${folderName}/${fileName}`;
 
+          console.log("Eski about resmi siliniyor:", publicId);
           await cloudinary.uploader.destroy(publicId);
         } catch (deleteError) {
           console.error("Eski resim silinirken hata:", deleteError);
@@ -155,6 +161,7 @@ const updateAbout = async (req, res) => {
           const folderName = urlParts[urlParts.length - 2];
           const publicId = `${folderName}/${fileName}`;
 
+          console.log("Eski about videosu siliniyor:", publicId);
           await cloudinary.uploader.destroy(publicId, {
             resource_type: "video",
           });
@@ -193,6 +200,8 @@ const updateAbout = async (req, res) => {
     } else if (req.body.aboutVideo && typeof req.body.aboutVideo === "string") {
       updateData.aboutVideo = req.body.aboutVideo;
     }
+
+    console.log("Update data:", updateData);
 
     // Veritabanında güncelleme
     const updatedAbout = await About.findByIdAndUpdate(id, updateData, {

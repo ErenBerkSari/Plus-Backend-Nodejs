@@ -4,6 +4,9 @@ const Owner = require("../models/Owner");
 const cloudinary = require("../utils/cloudinary");
 
 const createOwner = async (req, res) => {
+  console.log("Gelen Veriler:", req.body);
+  console.log("Yüklenen Dosyalar:", req.file);
+
   try {
     const { ownerName, ownerDesc, ownerTitle } = req.body;
 
@@ -45,6 +48,7 @@ const createOwner = async (req, res) => {
     });
 
     const savedOwner = await newOwner.save();
+    console.log("Kaydedilen ortak:", savedOwner);
 
     res.status(201).json(savedOwner);
   } catch (error) {
@@ -68,6 +72,9 @@ const getAllOwner = async (req, res) => {
 };
 
 const updateOwner = async (req, res) => {
+  console.log("📩 Gelen Veriler:", req.body);
+  console.log("🖼️ Yüklenen Dosya:", req.file);
+
   const { id } = req.params;
   const { ownerName, ownerDesc, ownerTitle } = req.body;
 
@@ -106,6 +113,7 @@ const updateOwner = async (req, res) => {
           const folderName = urlParts[urlParts.length - 2];
           const publicId = `${folderName}/${fileName}`;
 
+          console.log("Eski owner resmi siliniyor:", publicId);
           await cloudinary.uploader.destroy(publicId);
         } catch (deleteError) {
           console.error("Eski resim silinirken hata:", deleteError);
