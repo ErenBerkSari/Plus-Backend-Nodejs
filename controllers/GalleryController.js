@@ -19,9 +19,6 @@ const getAllImages = async (req, res) => {
 
 // 📌 Yeni resim ekle
 const uploadImage = async (req, res) => {
-  console.log("📩 Gelen Veriler:", req.body);
-  console.log("🖼️ Yüklenen Dosya:", req.file);
-
   try {
     if (!req.file) {
       return res.status(400).json({ message: "Lütfen bir resim yükleyin." });
@@ -55,7 +52,6 @@ const uploadImage = async (req, res) => {
 
     const savedImage = await newImage.save();
 
-    console.log("✅ Kaydedilen Resim:", savedImage);
     res.status(201).json(savedImage);
   } catch (error) {
     console.error("🔥 Resim yüklenirken hata:", error);
@@ -86,7 +82,6 @@ const deleteImage = async (req, res) => {
         const folderName = urlParts[urlParts.length - 2];
         const publicId = `${folderName}/${fileName}`;
 
-        console.log("Cloudinary'den resim siliniyor:", publicId);
         await cloudinary.uploader.destroy(publicId);
       } catch (deleteError) {
         console.error("Cloudinary'den resim silinirken hata:", deleteError);

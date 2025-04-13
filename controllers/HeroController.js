@@ -5,7 +5,6 @@ const cloudinary = require("../utils/cloudinary");
 
 const createHero = async (req, res) => {
   const { heroTitle, heroDesc, heroVideo, heroImage } = req.body;
-  console.log("Gelen Veriler:", req.body); // Gelen verileri logla
 
   try {
     const newHero = new Hero({
@@ -16,7 +15,6 @@ const createHero = async (req, res) => {
     });
 
     const savedHero = await newHero.save();
-    console.log("Kaydedilen Ders:", savedHero);
 
     res.status(201).json(newHero);
   } catch (error) {
@@ -41,9 +39,6 @@ const getHero = async (req, res) => {
 };
 
 const updateHero = async (req, res) => {
-  console.log("Gelen veriler:", req.body);
-  console.log("Yüklenen dosyalar:", req.files);
-
   const id = process.env.HERO;
   const { heroTitle, heroDesc } = req.body;
 
@@ -74,7 +69,6 @@ const updateHero = async (req, res) => {
           const folderName = urlParts[urlParts.length - 2];
           const publicId = `${folderName}/${fileName}`;
 
-          console.log("Eski resim siliniyor:", publicId);
           await cloudinary.uploader.destroy(publicId);
         } catch (deleteError) {
           console.error("Eski resim silinirken hata:", deleteError);
@@ -123,7 +117,6 @@ const updateHero = async (req, res) => {
           const folderName = urlParts[urlParts.length - 2];
           const publicId = `${folderName}/${fileName}`;
 
-          console.log("Eski video siliniyor:", publicId);
           await cloudinary.uploader.destroy(publicId);
         } catch (deleteError) {
           console.error("Eski video silinirken hata:", deleteError);
@@ -160,8 +153,6 @@ const updateHero = async (req, res) => {
     } else if (req.body.heroVideo && typeof req.body.heroVideo === "string") {
       updateData.heroVideo = req.body.heroVideo;
     }
-
-    console.log("Update data:", updateData);
 
     // Veritabanında güncelleme
     const updatedHero = await Hero.findByIdAndUpdate(id, updateData, {

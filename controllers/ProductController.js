@@ -48,14 +48,10 @@ const createProduct = async (req, res) => {
 
 const updateProduct = async (req, res) => {
   try {
-    console.log("📤 Güncelleme isteği alındı. ID:", req.params.id);
-    console.log("🔄 Gönderilen veriler:", req.body);
-
     const { id } = req.params;
     const product = await Product.findById(id);
 
     if (!product) {
-      console.log("❌ Ürün bulunamadı!");
       return res.status(404).json({ error: "Ürün bulunamadı!" });
     }
 
@@ -68,8 +64,6 @@ const updateProduct = async (req, res) => {
 
     // Eğer yeni bir resim yüklendiyse
     if (req.file) {
-      console.log("📸 Yeni resim yüklendi");
-
       // Eski resmi sil (eğer varsa)
       if (product.productImage) {
         try {
@@ -78,7 +72,6 @@ const updateProduct = async (req, res) => {
           const folder = product.productImage.split("/").slice(-2)[0];
           const fullPublicId = `${folder}/${publicId}`;
 
-          console.log("🗑️ Eski resim siliniyor, public_id:", fullPublicId);
           await cloudinary.uploader.destroy(fullPublicId);
         } catch (deleteError) {
           console.error("Eski resim silinirken hata:", deleteError);
@@ -103,7 +96,6 @@ const updateProduct = async (req, res) => {
       updatedFields.productImage = result.secure_url;
     }
 
-    console.log("📝 Ürün güncelleniyor:", updatedFields);
     const updatedProduct = await Product.findByIdAndUpdate(id, updatedFields, {
       new: true,
     });

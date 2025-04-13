@@ -20,10 +20,6 @@ const authMiddleware = async (req, res, next) => {
         role: decoded.role,
       };
 
-      if (process.env.NODE_ENV === "development") {
-        console.log("Authenticated User:", req.user);
-      }
-
       next();
     } catch (tokenError) {
       // Token süresi dolmuşsa refresh token ile yenile
