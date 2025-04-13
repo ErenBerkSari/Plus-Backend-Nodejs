@@ -45,6 +45,10 @@ app.use("/gallery", galleryRoute);
 app.use("/owner", ownerRoute);
 app.use("/contact", contactRoute);
 
+app.use((req, res) => {
+  console.log(`Bilinmeyen rota erişim girişimi: ${req.method} ${req.path}`);
+  res.status(404).json({ message: "Bu endpoint bulunamadı" });
+});
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`Sunucu ${port} portunda başlatıldı.`);
