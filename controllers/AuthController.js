@@ -79,16 +79,20 @@ const login = async (req, res) => {
     if (!match) return res.status(401).json({ message: "Yanlış şifre." });
 
     const accessToken = generateAccessToken(user);
-    let refreshToken = await Token.findOne({ userId: user._id });
 
-    if (
-      !refreshToken ||
-      Date.now() - refreshToken.createdAt > REFRESH_UPDATE_INTERVAL
-    ) {
-      refreshToken = generateRefreshToken(user);
+    let tokenDoc = await Token.findOne({ userId: user._id });
+    let refreshTokenValue = tokenDoc?.refreshToken;
+
+    const shouldGenerateNew =
+      !refreshTokenValue ||
+      Date.now() - new Date(tokenDoc.createdAt).getTime() >
+        REFRESH_UPDATE_INTERVAL;
+
+    if (shouldGenerateNew) {
+      refreshTokenValue = generateRefreshToken(user);
       await Token.findOneAndUpdate(
         { userId: user._id },
-        { refreshToken, createdAt: Date.now() },
+        { refreshToken: refreshTokenValue, createdAt: Date.now() },
         { upsert: true }
       );
     }
@@ -99,7 +103,7 @@ const login = async (req, res) => {
       sameSite: "none",
       maxAge: 20 * 60 * 1000,
     });
-    res.cookie("refreshToken", refreshToken.refreshToken, {
+    res.cookie("refreshToken", refreshTokenValue, {
       httpOnly: true,
       secure: true,
       sameSite: "none",
