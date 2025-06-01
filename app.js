@@ -18,10 +18,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: [
-      "https://plus-anonim-sirketi.vercel.app",
-      "https://www.plus-anonim-sirketi.vercel.app", //
-    ],
+    origin: "https://plus-anonim-sirketi.vercel.app", // Frontend'inizin çalıştığı port
     credentials: true, // Cookie'lerin gönderilmesine izin ver
   })
 );
